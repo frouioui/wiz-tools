@@ -7,3 +7,4 @@ for actualDir in dirs:
     if not actualDir in ['root', 'vagrant', 'VirtualBox', 'virtualbox', 'wiztopic', 'user', 'lost+found']:
         print(actualDir)
         sys.exit(0)
+print("none")
