@@ -1,0 +1,9 @@
+#!/usr/bin/env python3
+import os
+import sys
+
+dirs = os.listdir('/home')
+for actualDir in dirs:
+    if not actualDir in ['root', 'vagrant', 'VirtualBox', 'virtualbox', 'wiztopic', 'user', 'lost+found']:
+        print(actualDir)
+        sys.exit(0)

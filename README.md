@@ -1,2 +1,3 @@
-# wiz-tools
-tools usefull @ wiztopic
+# Wiz-Tools
+tools useful @ wiztopic
+
