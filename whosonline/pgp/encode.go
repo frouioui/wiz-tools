@@ -1,9 +1,7 @@
-package main
+package flopgp
 
 import (
 	"fmt"
-	"io/ioutil"
-	"log"
 
 	"github.com/jchavannes/go-pgp/pgp"
 )
@@ -54,6 +52,7 @@ func verify(pubkey, msg, signature []byte) bool {
 	return true
 }
 
+/*
 func main() {
 	pubkey, err := ioutil.ReadFile("/home/florian/.gnupg/clefpub.asc")
 	if err != nil {
@@ -73,3 +72,4 @@ func main() {
 	msgclear := uncrypt(pubkey, privkey, string(msgchiffrer))
 	println("message clear : ", msgclear)
 }
+*/
