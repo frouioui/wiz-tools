@@ -19,8 +19,8 @@ type Keys struct {
 
 //Requete contiens la requete en json
 type Requete struct {
-	Cmd     string
-	Options interface{}
+	Cmd string
+	Opt interface{}
 }
 
 //Options contiens les details (pas definitif à revoir)
