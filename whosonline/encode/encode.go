@@ -9,24 +9,27 @@ import (
 
 //Keys should contains all the info's about the keys
 type Keys struct {
-	pubkey    []byte
-	privkey   []byte
-	othpubkey []byte
+	//Pubkey is your Own public key
+	Pubkey []byte
+	//Privkey is your Own private key
+	Privkey []byte
+	//Othpubkey is the other person public key
+	Othpubkey []byte
 }
 
 //Init initialize the struct
 func Init(pubkey, privkey, othpubkey string) Keys {
 	var keys Keys
 	var err error
-	keys.pubkey, err = ioutil.ReadFile(pubkey)
+	keys.Pubkey, err = ioutil.ReadFile(pubkey)
 	if err != nil {
 		return Keys{}
 	}
-	keys.privkey, err = ioutil.ReadFile(privkey)
+	keys.Privkey, err = ioutil.ReadFile(privkey)
 	if err != nil {
 		return Keys{}
 	}
-	keys.othpubkey, err = ioutil.ReadFile(othpubkey)
+	keys.Othpubkey, err = ioutil.ReadFile(othpubkey)
 	if err != nil {
 		return Keys{}
 	}
@@ -35,7 +38,7 @@ func Init(pubkey, privkey, othpubkey string) Keys {
 
 //Sign a message to authentify the author
 func (keys Keys) Sign(msg []byte) []byte {
-	entity, _ := pgp.GetEntity(keys.pubkey, keys.privkey)
+	entity, _ := pgp.GetEntity(keys.Pubkey, keys.Privkey)
 	signature, _ := pgp.Sign(entity, msg)
 
 	return signature
@@ -43,7 +46,7 @@ func (keys Keys) Sign(msg []byte) []byte {
 
 //Encrypt takes a message and encrypt it
 func (keys Keys) Encrypt(msg string) []byte {
-	pubEntity, err := pgp.GetEntity(keys.othpubkey, []byte{})
+	pubEntity, err := pgp.GetEntity(keys.Othpubkey, []byte{})
 	if err != nil {
 		println(fmt.Errorf("Error getting entity: %v", err))
 	}
@@ -57,7 +60,7 @@ func (keys Keys) Encrypt(msg string) []byte {
 
 //Uncrypt unseal a message
 func (keys Keys) Uncrypt(msg string) string {
-	privEntity, err := pgp.GetEntity(keys.pubkey, keys.privkey)
+	privEntity, err := pgp.GetEntity(keys.Pubkey, keys.Privkey)
 	if err != nil {
 		println(fmt.Errorf("Error getting entity: %v", err))
 	}
@@ -72,7 +75,7 @@ func (keys Keys) Uncrypt(msg string) string {
 
 //Verify that the message really come from the author
 func (keys Keys) Verify(msg, signature []byte) bool {
-	pubEntity, err := pgp.GetEntity(keys.othpubkey, []byte{})
+	pubEntity, err := pgp.GetEntity(keys.Othpubkey, []byte{})
 	if err != nil {
 		println(fmt.Errorf("Error getting entity: %v", err))
 	}
