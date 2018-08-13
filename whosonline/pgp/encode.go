@@ -1,4 +1,4 @@
-package flopgp
+package whoisit
 
 import (
 	"fmt"
