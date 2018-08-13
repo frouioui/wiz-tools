@@ -6,14 +6,16 @@ import (
 	"github.com/jchavannes/go-pgp/pgp"
 )
 
-func sign(pubkey, privkey, msg []byte) []byte {
+//Sign a message to authentify the author
+func Sign(pubkey, privkey, msg []byte) []byte {
 	entity, _ := pgp.GetEntity(pubkey, privkey)
 	signature, _ := pgp.Sign(entity, msg)
 
 	return signature
 }
 
-func encrypt(pubkey []byte, msg string) []byte {
+//Encrypt takes a message and encrypt it
+func Encrypt(pubkey []byte, msg string) []byte {
 	pubEntity, err := pgp.GetEntity([]byte(pubkey), []byte{})
 	if err != nil {
 		println(fmt.Errorf("Error getting entity: %v", err))
@@ -26,7 +28,8 @@ func encrypt(pubkey []byte, msg string) []byte {
 	return encrypted
 }
 
-func uncrypt(pubkey, privkey []byte, msg string) string {
+//Uncrypt unseal a message
+func Uncrypt(pubkey, privkey []byte, msg string) string {
 	privEntity, err := pgp.GetEntity([]byte(pubkey), []byte(privkey))
 	if err != nil {
 		println(fmt.Errorf("Error getting entity: %v", err))
@@ -40,7 +43,8 @@ func uncrypt(pubkey, privkey []byte, msg string) string {
 	return decryptedMessage
 }
 
-func verify(pubkey, msg, signature []byte) bool {
+//Verify that the message really come from the author
+func Verify(pubkey, msg, signature []byte) bool {
 	pubEntity, err := pgp.GetEntity(pubkey, []byte{})
 	if err != nil {
 		println(fmt.Errorf("Error getting entity: %v", err))
