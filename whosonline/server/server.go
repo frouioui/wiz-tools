@@ -1,9 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"time"
@@ -27,6 +26,7 @@ func checkActiveComputer(i int, channel chan bool, keys *encode.Keys) {
 	if err != nil {
 		channel <- false
 	} else {
+		defer conn.Close()
 		//var avi map[string]string{} = {"avion": "avion", "toz": "poubelle"}
 		test := "{\"cmd\": \"who\"}"
 		message := keys.Encrypt(test)
@@ -35,12 +35,12 @@ func checkActiveComputer(i int, channel chan bool, keys *encode.Keys) {
 		checkErr(err)
 		_, err = conn.Write(message)
 		checkErr(err)
-		var buf bytes.Buffer
-		io.Copy(&buf, conn)
-		println(buf.String())
+		buf, err := ioutil.ReadAll(conn)
+		checkErr(err)
+		println(buf)
+		//println(buf.String())
 		//fmt.Printf("%s #%s\n", ip, buffer)
 		channel <- true
-		conn.Close()
 	}
 }
 

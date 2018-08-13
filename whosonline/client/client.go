@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -15,13 +13,13 @@ import (
 )
 
 //Location of own public key
-const locOwnPubKey = "/root/wiz-tools/gpg/pubkey_client.asc"
+const locOwnPubKey = "/home/florian/Documents/wiz-tools/gpg/pubkey_client.asc"
 
 //Location of own private key
-const locOwnPrivKey = "/root/wiz-tools/gpg/privkey_client.asc"
+const locOwnPrivKey = "/home/florian/Documents/wiz-tools/gpg/privkey_client.asc"
 
 //Location of the other person public key
-const locOthPubKey = "/root/wiz-tools/gpg/clefpub.asc"
+const locOthPubKey = "/home/florian/Documents/wiz-tools/gpg/clefpub.asc"
 
 //whoIsIt get the result of the command whoisit
 func whoIsIt() []byte {
@@ -31,18 +29,21 @@ func whoIsIt() []byte {
 }
 
 func getTheCmd(conn net.Conn, keys *encode.Keys) encode.Requete {
-	signature := make([]byte, 800)
-	n, err := conn.Read(signature)
-	if n != 800 {
-		panic("[ERROR] bad size..")
-	}
+	buf, err := ioutil.ReadAll(conn)
 	checkErr(err)
-	var buf bytes.Buffer
-	io.Copy(&buf, conn)
-	if keys.Verify(buf.Bytes(), signature) == false {
+	if len(buf) <= 800 {
+		panic("[ERROR] Taille du buffer invalid..")
+	}
+	println("TEST 3")
+	/*signature := buf.Bytes()[:800]
+	msg := buf.Bytes()[800:]
+	println("sig : ", string(signature))
+	println("msg : ", msg))
+	println("TEST 3")*/
+	/*if keys.Verify(buf, signature) == false {
 		panic("[ERROR] : Mauvaise signature..")
 	}
-	cmd := keys.Uncrypt(buf.String())
+	cmd := keys.Uncrypt(string(buf))
 	var dat encode.Requete
 	if err := json.Unmarshal([]byte(cmd), &dat); err != nil {
 		println("ERREUR 3")
@@ -53,6 +54,7 @@ func getTheCmd(conn net.Conn, keys *encode.Keys) encode.Requete {
 		fmt.Printf("Key : %s | Value : %s\n", key, value)
 	}*/
 	println("Ok tout est bon je renvoi")
+	dat := encode.Requete{}
 	return dat
 }
 
