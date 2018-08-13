@@ -2,21 +2,48 @@ package encode
 
 import (
 	"fmt"
+	"io/ioutil"
 
 	"github.com/jchavannes/go-pgp/pgp"
 )
 
+//Keys should contains all the info's about the keys
+type Keys struct {
+	pubkey    []byte
+	privkey   []byte
+	othpubkey []byte
+}
+
+//Init initialize the struct
+func Init(pubkey, privkey, othpubkey string) Keys {
+	var keys Keys
+	var err error
+	keys.pubkey, err = ioutil.ReadFile(pubkey)
+	if err != nil {
+		return Keys{}
+	}
+	keys.privkey, err = ioutil.ReadFile(privkey)
+	if err != nil {
+		return Keys{}
+	}
+	keys.othpubkey, err = ioutil.ReadFile(othpubkey)
+	if err != nil {
+		return Keys{}
+	}
+	return keys
+}
+
 //Sign a message to authentify the author
-func Sign(pubkey, privkey, msg []byte) []byte {
-	entity, _ := pgp.GetEntity(pubkey, privkey)
+func (keys Keys) Sign(msg []byte) []byte {
+	entity, _ := pgp.GetEntity(keys.pubkey, keys.privkey)
 	signature, _ := pgp.Sign(entity, msg)
 
 	return signature
 }
 
 //Encrypt takes a message and encrypt it
-func Encrypt(pubkey []byte, msg string) []byte {
-	pubEntity, err := pgp.GetEntity([]byte(pubkey), []byte{})
+func (keys Keys) Encrypt(msg string) []byte {
+	pubEntity, err := pgp.GetEntity(keys.othpubkey, []byte{})
 	if err != nil {
 		println(fmt.Errorf("Error getting entity: %v", err))
 	}
@@ -29,8 +56,8 @@ func Encrypt(pubkey []byte, msg string) []byte {
 }
 
 //Uncrypt unseal a message
-func Uncrypt(pubkey, privkey []byte, msg string) string {
-	privEntity, err := pgp.GetEntity([]byte(pubkey), []byte(privkey))
+func (keys Keys) Uncrypt(msg string) string {
+	privEntity, err := pgp.GetEntity(keys.pubkey, keys.privkey)
 	if err != nil {
 		println(fmt.Errorf("Error getting entity: %v", err))
 	}
@@ -44,8 +71,8 @@ func Uncrypt(pubkey, privkey []byte, msg string) string {
 }
 
 //Verify that the message really come from the author
-func Verify(pubkey, msg, signature []byte) bool {
-	pubEntity, err := pgp.GetEntity(pubkey, []byte{})
+func (keys Keys) Verify(msg, signature []byte) bool {
+	pubEntity, err := pgp.GetEntity(keys.othpubkey, []byte{})
 	if err != nil {
 		println(fmt.Errorf("Error getting entity: %v", err))
 	}
