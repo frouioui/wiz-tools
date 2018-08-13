@@ -2,22 +2,39 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"time"
+
+	"github.com/redcurrents/wiz-tools/whosonline/encode"
 )
 
-func checkActiveComputer(i int, channel chan bool) {
+//Location of own public key
+const locOwnPubKey = "/home/florian/Documents/wiz-tools/gpg/clefpub.asc"
+
+//Location of own private key
+const locOwnPrivKey = "/home/florian/.gnupg/clefpriv.asc"
+
+//Location of the other person public key
+const locOthPubKey = "/home/florian/Documents/wiz-tools/gpg/pubkey_client.asc"
+
+//checkActiveComputer will check for an ip if the computer is alive or not and who is it
+func checkActiveComputer(i int, channel chan bool, keys *encode.Keys) {
 	ip := fmt.Sprintf("%s.%d:%d", "192.168.2", i, 8754)
 	conn, err := net.DialTimeout("tcp", ip, 2*time.Second)
 	if err != nil {
 		channel <- false
 	} else {
-		_, err := conn.Write([]byte("who"))
+		//var avi map[string]string{} = {"avion": "avion", "toz": "poubelle"}
+		test := "{\"cmd\": \"who\"}"
+		message := keys.Encrypt(test)
+		signature := keys.Sign(message)
+		println(len(message), len(signature))
+		_, err := conn.Write(signature)
 		checkErr(err)
-		buffer := make([]byte, 16)
-		_, err = conn.Read(buffer)
+		_, err = conn.Write(message)
 		checkErr(err)
-		fmt.Printf("%s #%s\n", ip, buffer)
+		//fmt.Printf("%s #%s\n", ip, buffer)
 		channel <- true
 		conn.Close()
 	}
@@ -31,9 +48,12 @@ func checkErr(e error) {
 
 func main() {
 	channels := make(chan bool, 255)
-
+	keys := encode.Init(locOwnPubKey, locOwnPrivKey, locOthPubKey)
+	if string(keys.Othpubkey) == "" {
+		log.Fatal("impossible de get les clefs..")
+	}
 	for i := 0; i <= 254; i++ {
-		go checkActiveComputer(i, channels)
+		go checkActiveComputer(i, channels, &keys)
 	}
 	for i := 0; i <= 254; i++ {
 		<-channels

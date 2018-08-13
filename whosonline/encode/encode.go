@@ -17,6 +17,19 @@ type Keys struct {
 	Othpubkey []byte
 }
 
+//Requete contiens la requete en json
+type Requete struct {
+	Cmd     string
+	Options interface{}
+}
+
+//Options contiens les details (pas definitif à revoir)
+type Options struct {
+	Title string
+	Text  string
+	Image string
+}
+
 //Init initialize the struct
 func Init(pubkey, privkey, othpubkey string) Keys {
 	var keys Keys
