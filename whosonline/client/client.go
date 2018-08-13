@@ -15,13 +15,13 @@ import (
 )
 
 //Location of own public key
-const locOwnPubKey = "/home/florian/Documents/wiz-tools/gpg/pubkey_client.asc"
+const locOwnPubKey = "/root/wiz-tools/gpg/pubkey_client.asc"
 
 //Location of own private key
-const locOwnPrivKey = "/home/florian/Documents/wiz-tools/gpg/privkey_client.asc"
+const locOwnPrivKey = "/root/wiz-tools/gpg/privkey_client.asc"
 
 //Location of the other person public key
-const locOthPubKey = "/home/florian/Documents/wiz-tools/gpg/clefpub.asc"
+const locOthPubKey = "/root/wiz-tools/gpg/clefpub.asc"
 
 //whoIsIt get the result of the command whoisit
 func whoIsIt() []byte {
@@ -30,38 +30,44 @@ func whoIsIt() []byte {
 	return (out)
 }
 
-func getTheCmd(conn net.Conn, keys *encode.Keys) map[string]string {
+func getTheCmd(conn net.Conn, keys *encode.Keys) encode.Requete {
 	signature := make([]byte, 800)
 	n, err := conn.Read(signature)
 	if n != 800 {
-		panic("bad signature")
+		panic("[ERROR] bad size..")
 	}
 	checkErr(err)
 	var buf bytes.Buffer
 	io.Copy(&buf, conn)
 	if keys.Verify(buf.Bytes(), signature) == false {
-		panic("[ERROR] : Mauvaise signature")
+		panic("[ERROR] : Mauvaise signature..")
 	}
 	cmd := keys.Uncrypt(buf.String())
-	var dat map[string]string
+	var dat encode.Requete
 	if err := json.Unmarshal([]byte(cmd), &dat); err != nil {
+		println("ERREUR 3")
 		panic(err)
 	}
 	//println(dat["cmd"])
 	/*for key, value := range dat {
 		fmt.Printf("Key : %s | Value : %s\n", key, value)
 	}*/
+	println("Ok tout est bon je renvoi")
 	return dat
 }
 
 func handleConnection(conn net.Conn, keys *encode.Keys) {
 	defer conn.Close()
+	defer println("[-] Fin de la connexion")
 	data := getTheCmd(conn, keys)
-	switch data["cmd"] {
+	print(data.Cmd)
+	switch data.Cmd {
 	case "who":
 		_, err := conn.Write(whoIsIt())
 		checkErr(err)
 		fmt.Println("[who] : -> Message Send")
+	default:
+		fmt.Println("[ERREUR] Mauvaise Commande")
 	}
 	/*requestb := make([]byte, 3)
 	_, err := conn.Read(requestb)

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"time"
@@ -29,11 +31,13 @@ func checkActiveComputer(i int, channel chan bool, keys *encode.Keys) {
 		test := "{\"cmd\": \"who\"}"
 		message := keys.Encrypt(test)
 		signature := keys.Sign(message)
-		println(len(message), len(signature))
 		_, err := conn.Write(signature)
 		checkErr(err)
 		_, err = conn.Write(message)
 		checkErr(err)
+		var buf bytes.Buffer
+		io.Copy(&buf, conn)
+		println(buf.String())
 		//fmt.Printf("%s #%s\n", ip, buffer)
 		channel <- true
 		conn.Close()
