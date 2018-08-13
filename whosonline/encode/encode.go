@@ -1,4 +1,4 @@
-package whoisit
+package encode
 
 import (
 	"fmt"

@@ -1,19 +1,16 @@
-package main
+package main whoisit
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"log"
 	"net"
+
+	"github.com/redcurrents/wiz-tools/whosonline/encode"
 )
 
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
-	var buf bytes.Buffer
-	io.Copy(&buf, conn)
-	fmt.Println("total size:", buf.Len())
-	fmt.Printf("%s", buf)
+	encode.encrypt()
 }
 
 func checkErr(e error) {
