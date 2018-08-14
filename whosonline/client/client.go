@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
+	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -29,32 +31,24 @@ func whoIsIt() []byte {
 }
 
 func getTheCmd(conn net.Conn, keys *encode.Keys) encode.Requete {
-	buf, err := ioutil.ReadAll(conn)
-	checkErr(err)
-	if len(buf) <= 800 {
-		panic("[ERROR] Taille du buffer invalid..")
-	}
-	println("TEST 3")
-	/*signature := buf.Bytes()[:800]
-	msg := buf.Bytes()[800:]
-	println("sig : ", string(signature))
-	println("msg : ", msg))
-	println("TEST 3")*/
-	/*if keys.Verify(buf, signature) == false {
-		panic("[ERROR] : Mauvaise signature..")
-	}
-	cmd := keys.Uncrypt(string(buf))
-	var dat encode.Requete
-	if err := json.Unmarshal([]byte(cmd), &dat); err != nil {
-		println("ERREUR 3")
+	buffer := bufio.NewReader(conn)
+	lines, err := buffer.ReadBytes(0x00)
+	if err != io.EOF && err != nil {
 		panic(err)
 	}
-	//println(dat["cmd"])
-	/*for key, value := range dat {
-		fmt.Printf("Key : %s | Value : %s\n", key, value)
-	}*/
-	println("Ok tout est bon je renvoi")
-	dat := encode.Requete{}
+	if len(lines) <= 800 {
+		panic("line trop court")
+	}
+	signature := lines[:800]
+	msg := lines[800 : len(lines)-1]
+	if keys.Verify(msg, signature) == false {
+		panic("[ERROR] : Mauvaise signature..")
+	}
+	cmd := keys.Uncrypt(string(msg))
+	var dat encode.Requete
+	if err := json.Unmarshal([]byte(cmd), &dat); err != nil {
+		panic(err)
+	}
 	return dat
 }
 

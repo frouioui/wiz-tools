@@ -1,8 +1,9 @@
 package main
 
 import (
+	"bufio"
+	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"time"
@@ -27,17 +28,32 @@ func checkActiveComputer(i int, channel chan bool, keys *encode.Keys) {
 		channel <- false
 	} else {
 		defer conn.Close()
+		newWriter := bufio.NewWriter(conn)
+		test := encode.Requete{Cmd: "who", Opt: encode.Options{}}
+		b, err := json.Marshal(test)
+		checkErr(err)
+		message := keys.Encrypt(string(b))
+		signature := keys.Sign(message)
+		println(len(signature), len(message))
+		newWriter.Write(signature)
+		newWriter.Write(message)
+		newWriter.WriteByte(0x00)
+		newWriter.Flush()
+		newReader := bufio.NewReader(conn)
+		line, _, _ := newReader.ReadLine()
+		fmt.Printf("%s #%s\n", ip, line)
 		//var avi map[string]string{} = {"avion": "avion", "toz": "poubelle"}
-		test := "{\"cmd\": \"who\"}"
+		/*test := "{\"cmd\": \"who\"}"
 		message := keys.Encrypt(test)
 		signature := keys.Sign(message)
 		_, err := conn.Write(signature)
 		checkErr(err)
 		_, err = conn.Write(message)
 		checkErr(err)
+		time.Sleep(time.Second * 10)
 		buf, err := ioutil.ReadAll(conn)
 		checkErr(err)
-		println(buf)
+		println(buf)*/
 		//println(buf.String())
 		//fmt.Printf("%s #%s\n", ip, buffer)
 		channel <- true
