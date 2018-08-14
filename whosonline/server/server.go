@@ -71,7 +71,7 @@ func checkActiveComputer(i int, channel chan bool, keys *encode.Keys) {
 		channel <- false
 	} else {
 		defer conn.Close()
-		req := encode.Requete{Cmd: "notif", Opt: encode.Options{Title: "Salut", Text: "c thierry", Image: "/home/florian/Documents/wiz-tools/whosonline/res/Wiztopic-Logos.png"}}
+		req := encode.Requete{Cmd: "notif", Opt: encode.Options{Title: "DevOps - Wiztopic", Text: "Petit test afin de voir des bails", Image: "/home/florian/Documents/wiz-tools/whosonline/res/Wiztopic-Logos.png"}}
 		if sendCmd(conn, keys, req) == true {
 			newReader := bufio.NewReader(conn)
 			line, _, _ := newReader.ReadLine()
