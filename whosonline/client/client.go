@@ -26,73 +26,59 @@ const locOthPubKey = "/home/florian/Documents/wiz-tools/gpg/clefpub.asc"
 //whoIsIt get the result of the command whoisit
 func whoIsIt() []byte {
 	out, err := exec.Command("whoisit").Output()
-	checkErr(err)
+	if err != nil {
+		return nil
+	}
 	return (out)
 }
 
-func getTheCmd(conn net.Conn, keys *encode.Keys) encode.Requete {
+func getTheCmd(conn net.Conn, keys *encode.Keys) (encode.Requete, int) {
 	buffer := bufio.NewReader(conn)
 	lines, err := buffer.ReadBytes(0x00)
 	if err != io.EOF && err != nil {
-		panic(err)
+		log.Println(err)
+		return encode.Requete{}, 1
 	}
 	if len(lines) <= 800 {
-		panic("line trop court")
+		log.Println("Minimum 800 bytes..")
+		return encode.Requete{}, 1
 	}
 	signature := lines[:800]
 	msg := lines[800 : len(lines)-1]
 	if keys.Verify(msg, signature) == false {
-		panic("[ERROR] : Mauvaise signature..")
+		log.Printf("Mauvaise signature de %s\n", conn.RemoteAddr())
+		return encode.Requete{}, 1
 	}
-	cmd := keys.Uncrypt(string(msg))
-	var dat encode.Requete
-	if err := json.Unmarshal([]byte(cmd), &dat); err != nil {
-		panic(err)
+	cmd := keys.Uncrypt(msg)
+	var data encode.Requete
+	if err := json.Unmarshal([]byte(cmd), &data); err != nil {
+		log.Println("Impossible de récupérer la requete json..")
+		return encode.Requete{}, 1
 	}
-	return dat
+	return data, 0
 }
 
 func handleConnection(conn net.Conn, keys *encode.Keys) {
 	defer conn.Close()
-	defer println("[-] Fin de la connexion")
-	data := getTheCmd(conn, keys)
-	print(data.Cmd)
+	defer fmt.Printf("[-] Fin de la connexion\n")
+	data, code := getTheCmd(conn, keys)
+	if code == 1 {
+		return
+	}
 	switch data.Cmd {
 	case "who":
 		_, err := conn.Write(whoIsIt())
-		checkErr(err)
-		fmt.Println("[who] : -> Message Send")
+		if err != nil {
+			log.Printf("Impossible d'écrire le nom d'utilisateur..\n")
+			return
+		}
+		fmt.Printf("[%s] : -> Message Send\n", data.Cmd)
+	case "notif":
+		//J'aime vraiment pas ça, à changer d'urgence pour utiliser la structure encode.Options
+		options := data.Opt.(map[string]interface{})
+		displayNotification(options["Title"].(string), options["Text"].(string), options["Image"].(string))
 	default:
 		fmt.Println("[ERREUR] Mauvaise Commande")
-	}
-	/*requestb := make([]byte, 3)
-	_, err := conn.Read(requestb)
-	checkErr(err)
-	switch request := fmt.Sprintf("%s", requestb); request {
-	case "who":
-		_, err = conn.Write(whoIsIt())
-		checkErr(err)
-		fmt.Println("[who] : -> Message Send")
-	case "msg":
-		title, body, img := make([]byte, 32), make([]byte, 256), make([]byte, 128)
-		_, err := conn.Read(title)
-		checkErr(err)
-		fmt.Printf("Title : %s\n", title)
-		_, err = conn.Read(body)
-		checkErr(err)
-		fmt.Printf("Body : %s\n", body)
-		_, err = conn.Read(img)
-		checkErr(err)
-		fmt.Printf("Image : %s\n", img)
-		displayNotification(string(title), string(body), string(img))
-	default:
-		fmt.Printf("[%s] : Unknow command..", request)
-	}*/
-}
-
-func checkErr(e error) {
-	if e != nil {
-		panic(e)
 	}
 }
 
@@ -133,7 +119,7 @@ func main() {
 		if err != nil {
 			println(err)
 		} else {
-			fmt.Println("[+] New connexion")
+			fmt.Printf("[+] New connexion (%s)\n", conn.RemoteAddr())
 			go handleConnection(conn, &keys)
 		}
 	}
