@@ -1,8 +1,8 @@
 package encode
 
 import (
-	"fmt"
 	"io/ioutil"
+	"log"
 
 	"github.com/jchavannes/go-pgp/pgp"
 )
@@ -36,14 +36,17 @@ func Init(pubkey, privkey, othpubkey string) Keys {
 	var err error
 	keys.Pubkey, err = ioutil.ReadFile(pubkey)
 	if err != nil {
+		log.Println(err)
 		return Keys{}
 	}
 	keys.Privkey, err = ioutil.ReadFile(privkey)
 	if err != nil {
+		log.Println(err)
 		return Keys{}
 	}
 	keys.Othpubkey, err = ioutil.ReadFile(othpubkey)
 	if err != nil {
+		log.Println(err)
 		return Keys{}
 	}
 	return keys
@@ -51,46 +54,55 @@ func Init(pubkey, privkey, othpubkey string) Keys {
 
 //Sign a message to authentify the author
 func (keys Keys) Sign(msg []byte) []byte {
-	entity, _ := pgp.GetEntity(keys.Pubkey, keys.Privkey)
-	signature, _ := pgp.Sign(entity, msg)
-
+	entity, err := pgp.GetEntity(keys.Pubkey, keys.Privkey)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	signature, err := pgp.Sign(entity, msg)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
 	return signature
 }
 
 //Encrypt takes a message and encrypt it
-func (keys Keys) Encrypt(msg string) []byte {
+func (keys Keys) Encrypt(msg []byte) []byte {
 	pubEntity, err := pgp.GetEntity(keys.Othpubkey, []byte{})
 	if err != nil {
-		println(fmt.Errorf("Error getting entity: %v", err))
+		log.Println(err)
+		return nil
 	}
 	encrypted, err := pgp.Encrypt(pubEntity, []byte(msg))
 	if err != nil {
-		println(err)
+		log.Println(err)
+		return nil
 	}
-
 	return encrypted
 }
 
 //Uncrypt unseal a message
-func (keys Keys) Uncrypt(msg string) string {
+func (keys Keys) Uncrypt(msg []byte) []byte {
 	privEntity, err := pgp.GetEntity(keys.Pubkey, keys.Privkey)
 	if err != nil {
-		println(fmt.Errorf("Error getting entity: %v", err))
+		log.Println(err)
+		return nil
 	}
-	decrypted, err := pgp.Decrypt(privEntity, []byte(msg))
+	decrypted, err := pgp.Decrypt(privEntity, msg)
 	if err != nil {
-		println(err)
+		log.Println(err)
+		return nil
 	}
-	decryptedMessage := string(decrypted)
-
-	return decryptedMessage
+	return decrypted
 }
 
 //Verify that the message really come from the author
 func (keys Keys) Verify(msg, signature []byte) bool {
 	pubEntity, err := pgp.GetEntity(keys.Othpubkey, []byte{})
 	if err != nil {
-		println(fmt.Errorf("Error getting entity: %v", err))
+		log.Println(err)
+		return false
 	}
 	err = pgp.Verify(pubEntity, []byte(msg), signature)
 	if err != nil {
@@ -98,25 +110,3 @@ func (keys Keys) Verify(msg, signature []byte) bool {
 	}
 	return true
 }
-
-/*
-func main() {
-	pubkey, err := ioutil.ReadFile("/home/florian/.gnupg/clefpub.asc")
-	if err != nil {
-		log.Fatal(err)
-	}
-	privkey, err := ioutil.ReadFile("/home/florian/.gnupg/clefpriv.asc")
-	if err != nil {
-		log.Fatal(err)
-	}
-	msg := "Salut à tous c benoit Magimel"
-
-	msgchiffrer := encrypt(pubkey, msg)
-	println("msg chiffrer : ", string(msgchiffrer))
-	signature := sign(pubkey, privkey, []byte(msgchiffrer))
-	println("Signature : ", string(signature))
-	verify(pubkey, []byte(msgchiffrer), signature)
-	msgclear := uncrypt(pubkey, privkey, string(msgchiffrer))
-	println("message clear : ", msgclear)
-}
-*/
