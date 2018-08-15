@@ -14,14 +14,14 @@ import (
 	"github.com/redcurrents/wiz-tools/whosonline/encode"
 )
 
-//Location of own public key
-const locOwnPubKey = "/home/florian/Documents/wiz-tools/gpg/pubkey_client.asc"
-
-//Location of own private key
-const locOwnPrivKey = "/home/florian/Documents/wiz-tools/gpg/privkey_client.asc"
-
-//Location of the other person public key
-const locOthPubKey = "/home/florian/Documents/wiz-tools/gpg/clefpub.asc"
+const (
+	//Location of own public key
+	locOwnPubKey = "/home/florian/Documents/wiz-tools/gpg/pubkey_client.asc"
+	//Location of own private key
+	locOwnPrivKey = "/home/florian/Documents/wiz-tools/gpg/privkey_client.asc"
+	//Location of the other person public key
+	locOthPubKey = "/home/florian/Documents/wiz-tools/gpg/clefpub.asc"
+)
 
 //whoIsIt get the result of the command whoisit
 func whoIsIt() []byte {
